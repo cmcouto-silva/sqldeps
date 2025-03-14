@@ -43,10 +43,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Add uv to PATH
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Install PostgreSQL (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev
+
+      - name: Install PostgreSQL (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install postgresql
 
       - name: Sync dependencies
         run: uv sync
