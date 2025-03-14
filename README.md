@@ -1,5 +1,7 @@
 # SQL Dependency Extractor
 
+![Tests](https://github.com/cmcouto-silva/sqldeps/actions/workflows/ci.yml/badge.svg)
+
 An intelligent tool that automatically extracts and maps critical table and column dependencies from SQL scripts using advanced LLM capabilities.
 
 ## Overview

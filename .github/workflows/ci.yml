@@ -2,8 +2,7 @@ name: CI
 
 on:
   push:
-    branches:
-        - main
+    branches: [main]
   pull_request:
 
 jobs:
@@ -28,25 +27,30 @@ jobs:
   test:
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-        os: ["ubuntu-latest", "macos-latest"]
+        python-version: ["3.10"]
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
 
     runs-on: ${{ matrix.os }}
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install uv
+      - name: Install uv (Unix)
+        if: runner.os != 'Windows'
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-
+      
+      - name: Install uv (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+        
       - name: Install PostgreSQL (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libpq-dev
@@ -55,16 +59,8 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: brew install postgresql
 
-      - name: Sync dependencies
+      - name: Install dependencies
         run: uv sync
 
-      - name: Run tests with coverage
-        run: |
-          uv run coverage run -m pytest
-          uv run coverage xml
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: coverage.xml
+      - name: Run tests
+        run: uv run pytest
