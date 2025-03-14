@@ -1,0 +1,2924 @@
+Project Content Export
+Generated on: 2025-03-12 13:31:04
+Source directory: /home/cmcoutosilva/Projects/gitlab/sqldeps
+Included file extensions: .md, .py, .toml
+Additional included files: .gitlab-ci.yml, Makefile
+Exclude patterns: *$py.class, *.cover, *.egg, *.egg-info, *.log, *.manifest, *.mo, *.pot, *.py,cover, *.py[cod], *.sage.py, *.so, *.spec, .Python, .cache, .coverage, .coverage.*, .dmypy.json, .eggs, .env, .git, .hypothesis, .idea, .installed.cfg, .ipynb_checkpoints, .mypy_cache, .nox, .pdm-build, .pdm-python, .pdm.toml, .pybuilder, .pypirc, .pyre, .pytest_cache, .pytype, .ropeproject, .ruff_cache, .scrapy, .spyderproject, .spyproject, .tox, .venv, .webassets-cache, ENV, MANIFEST, Pipfile.lock, __pycache__, __pypackages__, build, celerybeat-schedule, celerybeat.pid, cover, coverage.xml, cython_debug, db.sqlite3, db.sqlite3-journal, develop-eggs, dist, dmypy.json, docs/_build, downloads, eggs, env, env.bak, htmlcov, instance, ipython_config.py, lib, lib64, local_settings.py, nosetests.xml, outputs, parts, pdm.lock, pip-delete-this-directory.txt, pip-log.txt, poetry.lock, profile_default, sdist, share/python-wheels, site, sqldeps_20250312_1331.txt, target, uv.lock, var, venv, venv.bak, wheels
+Project structure:
+.
+├── app
+│   └── main.py
+├── artifacts
+│   ├── web_import_function_defs.ipynb
+│   └── web_import_function_defs_deps.csv
+├── configs
+│   ├── prompts
+│   │   ├── custom.yml
+│   │   ├── default.yml
+│   │   ├── one_shot_custom.yml
+│   │   └── one_shot_default.yml
+│   └── database.yml
+├── data
+│   ├── examples
+│   │   ├── db_examples
+│   │   │   └── cainas_query.sql
+│   │   └── folders_with_sql_files
+│   │       ├── subfolder1
+│   │       │   ├── example3.sql
+│   │       │   └── example3_expected.json
+│   │       ├── subfolder2
+│   │       │   ├── subfolder2_1
+│   │       │   │   ├── example4.sql
+│   │       │   │   ├── example5.sql
+│   │       │   │   └── random_file.yml
+│   │       │   └── random_file.txt
+│   │       ├── example1.sql
+│   │       ├── example2.sql
+│   │       └── random_file.txt
+│   └── web_import_function_defs.csv
+├── docs
+│   └── .gitkeep
+├── notebooks
+│   ├── data_analysis.ipynb
+│   ├── database.ipynb
+│   ├── inference.ipynb
+│   ├── output.csv
+│   ├── playground.ipynb
+│   ├── sql_column_usage.html
+│   ├── sql_dependencies.csv
+│   ├── sql_dependencies_network.html
+│   └── tmp.ipynb
+├── scripts
+│   ├── evaluate.py
+│   └── extract_from_csv.py
+├── sqldeps
+│   ├── configs
+│   │   ├── params
+│   │   │   ├── deepseek.yml
+│   │   │   ├── groq.yml
+│   │   │   └── openai.yml
+│   │   └── prompts
+│   │       └── default.yml
+│   ├── database
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   └── postgresql.py
+│   ├── llm_parsers
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── deepseek.py
+│   │   ├── groq.py
+│   │   └── openai.py
+│   ├── __init__.py
+│   ├── cli.py
+│   ├── config.py
+│   ├── evaluate.py
+│   ├── models.py
+│   └── utils.py
+├── tests
+│   ├── test_sql
+│   │   ├── example1.sql
+│   │   ├── example10.sql
+│   │   ├── example2.sql
+│   │   ├── example3.sql
+│   │   ├── example4.sql
+│   │   ├── example5.sql
+│   │   ├── example6.sql
+│   │   ├── example7.sql
+│   │   ├── example8.sql
+│   │   ├── example9.sql
+│   │   └── oneshot.sql
+│   ├── test_sql_outputs
+│   │   ├── example10_expected.json
+│   │   ├── example1_expected.json
+│   │   ├── example2_expected.json
+│   │   ├── example3_expected.json
+│   │   ├── example4_expected.json
+│   │   ├── example5_expected.json
+│   │   ├── example6_expected.json
+│   │   ├── example7_expected.json
+│   │   ├── example8_expected.json
+│   │   ├── example9_expected.json
+│   │   └── oneshot.json
+│   ├── conftest.py
+│   ├── test_merge_dependencies.py
+│   ├── test_merge_schemas.py
+│   ├── test_schema_diff.py
+│   └── test_sql.py
+├── .env.example
+├── .gitignore
+├── .gitlab-ci.yml
+├── .python-version
+├── Makefile
+├── README.md
+├── README_PyPI.md
+└── pyproject.toml
+================================================================================
+
+File: .gitlab-ci.yml
+--------------------------------------------------------------------------------
+stages:
+  - lint
+  - test
+
+before_script:
+  - curl -LsSf https://astral.sh/uv/install.sh | sh
+  - export PATH=$HOME/.local/bin:$PATH
+  - uv sync
+
+test:
+  stage: test
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.10", "3.11", "3.12", "3.13"]
+        OS: ["ubuntu", "macos"]
+  image: python:${PYTHON_VERSION}
+  script:
+    - uv run coverage run -m pytest
+    - uv run coverage xml
+  artifacts:
+    paths:
+      - coverage.xml
+
+lint:
+  stage: lint
+  image: python:3.12
+  script:
+    - uv run ruff check .
+    - uv run ruff format --check .
+
+================================================================================
+
+File: Makefile
+--------------------------------------------------------------------------------
+.PHONY: fix 
+fix:
+	uv run ruff format .
+	uv run ruff check . --fix
+
+.PHONY: check
+check:
+	-uv run ruff format . --check
+	-uv run ruff check .
+
+================================================================================
+
+File: README.md
+--------------------------------------------------------------------------------
+# SQL Dependency Extractor
+
+An intelligent tool that automatically extracts and maps critical table and column dependencies from SQL scripts using advanced LLM capabilities.
+
+## Overview
+
+SQL Dependency Extractor identifies the minimal set of database objects required for successful query execution while filtering out temporary constructs, CTEs, and created tables. It's designed to help with:
+
+- **Change Management**: Safely modify database schemas by identifying real dependencies
+- **Storage Optimization**: Identify truly necessary tables and columns
+- **Migration Planning**: Know exactly what needs to be migrated
+- **Project Documentation**: Generate comprehensive documentation of which tables and columns a project repository requires
+
+## Core Features
+
+- Extracts only source tables and their required columns from SQL scripts
+- Automatically ignores temporary structures (CTEs, derived tables, etc.)
+- Optional schema validation against live databases
+- Generates clear dependency lists in JSON or CSV format
+
+## Installation
+
+### Requirements
+
+**Software:**
+- [UV](https://github.com/astral-sh/uv) - Python package manager
+- [Git](https://git-scm.com/) - Version control
+
+**API Keys/Tokens** (required only for frameworks you'll use):
+- [Groq](https://console.groq.com/keys)
+- [OpenAI](https://platform.openai.com/settings/organization/api-keys)
+- [DeepSeek](https://platform.deepseek.com/api_keys)
+
+> Note: [Groq](https://groq.com/) is the only framework that allows accessing hosted LLMs for free (no billing info required). See the [rate limits](https://console.groq.com/docs/rate-limits) for the Free Tier.
+
+### Install Stable Version from PyPI
+
+```bash
+uv pip install sqldeps
+```
+
+From TestPyPI:
+```bash
+uv pip install sqldeps --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/
+```
+
+### Install Development Version
+
+Clone the repository and install dependencies:
+
+```bash
+git clone git@gitlab.com:gibbs-lab/database/sql-dependency-extractor.git
+cd sql-dependency-extractor
+uv sync && source .venv/bin/activate
+```
+
+Create a `.env` file with your API keys (see `.env.example`):
+
+```
+# Database credentials
+DB_HOST = "host"
+DB_PORT = "5432"
+DB_NAME = "database"
+DB_USER = "username"
+DB_PASSWORD = "password"
+
+# API Keys
+GROQ_API_KEY = "groq_token"
+OPENAI_API_KEY = "openai_token"
+DEEPSEEK_API_KEY = "deepseek_token"
+```
+
+Alternatively, you can provide database credentials with a YAML file (see example in `configs/database.yml`).
+
+## Web Application - Showcase
+
+A Streamlit-based web interface is available for demonstrating SQL dependency extraction capabilities. The web app allows users to:
+
+- Upload SQL files or enter SQL queries directly
+- Select LLM frameworks, models and custom prompts
+- Visualize extracted dependencies in real-time
+- Optionally validate against a database schema
+- Download results in CSV or JSON format
+
+Note: The web application is primarily for demonstration and interactive exploration of single SQL queries. For processing multiple files or entire project folders, the CLI or API approach is recommended for better performance and flexibility.
+
+To run the web app (requires additional dependencies):
+
+```bash
+# Install with web app dependencies
+# uv pip install sqldeps[app] # *after uploading to PyPI
+uv sync --extra app
+
+# Run the Streamlit app
+streamlit run app/main.py
+```
+
+## Quick Start
+
+### API Usage
+
+```python
+from sqldeps.llm_parsers import create_extractor
+
+# Create extractor with default settings (framework="Groq" and model="llama-3.3-70b-versatile")
+extractor = create_extractor()
+
+# Extract dependencies from a SQL query
+sql_query = """
+SELECT u.name, u.email, o.order_date
+FROM users u
+JOIN orders o ON u.id = o.user_id
+WHERE o.status = 'completed'
+"""
+dependencies = extractor.extract_from_query(sql_query)
+
+# Or extract from a file
+dependencies = extractor.extract_from_file('path/to/query.sql')
+
+# Print results
+print(dependencies.to_dict())
+```
+
+### CLI Usage
+
+For command line usage:
+
+```bash
+sqldeps path/to/query.sql
+```
+
+Basic example with default settings (Groq with llama-3.3-70b-versatile):
+```bash
+sqldeps data/examples/db_examples/cainas_query.sql
+```
+
+Specifying parameters with database validation:
+```bash
+sqldeps \
+    data/examples/db_examples/cainas_query.sql \
+    --framework=deepseek \
+    --db-match-schema \
+    --db-target-schemas cainas \
+    --db-credentials configs/database.yml \
+    -o cainas_deps.csv
+```
+
+Process a folder recursively:
+```bash
+sqldeps \
+    data/examples/folders_with_sql_files \
+    --framework=openai \
+    --model=gpt-4o-mini \
+    -r \
+    -o folder_deps.csv
+```
+
+### All CLI Options
+
+```
+$ sqldeps --help
+                                                                                                                                            
+ Usage: sqldeps [OPTIONS] FPATH                                                                                                             
+                                                                                                                                            
+ Extract SQL dependencies from file or folder.                                                                                              
+ This tool analyzes SQL files to identify table and column dependencies, optionally validating them against a real database schema.         
+                                                                                                                                            
+╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *    fpath      PATH  SQL file or directory path [default: None] [required]                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --framework                                       TEXT  LLM framework to use [groq, openai, deepseek] [default: groq]                    │
+│ --model                                           TEXT  Model name for the selected framework [default: None]                            │
+│ --prompt                                          FILE  Path to custom prompt YAML file [default: None]                                  │
+│ --recursive           -r                                Recursively scan folder for SQL files                                            │
+│ --db-match-schema         --no-db-match-schema          Match dependencies against database schema [default: no-db-match-schema]         │
+│ --db-target-schemas                               TEXT  Comma-separated list of target schemas to validate against [default: public]     │
+│ --db-credentials                                  FILE  Path to database credentials YAML file [default: None]                           │
+│ --output              -o                          PATH  Output file path for extracted dependencies [default: dependencies.json]         │
+│ --install-completion                                    Install completion for the current shell.                                        │
+│ --show-completion                                       Show completion for the current shell, to copy it or customize the installation. │
+│ --help                                                  Show this message and exit.                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+## Supported Models
+
+| Framework | Model | Input Price ($/1M tokens) | Output Price ($/1M tokens) |
+|-----------|-------|---------------------------|----------------------------|
+| Groq      | gemma2-9b-it | 0.20 | 0.20 |
+| Groq      | llama-3.3-70b-versatile (default) | 0.59 | 0.79 |
+| Groq      | llama-3.1-8b-instant | 0.05 | 0.79 |
+| Groq      | mixtral-8x7b-32768 | 0.24 | 0.24 |
+| Groq      | deepseek-r1-distill-llama-70b | 0.75 | 0.99 |
+| OpenAI    | gpt-4o | 2.50 | 10.00 |
+| OpenAI    | gpt-4o-mini | 0.15 | 0.60 |
+| DeepSeek  | deepseek-chat | 0.27 | 1.10 |
+
+For up-to-date pricing details, please check: [Groq](https://groq.com/pricing/), [OpenAI](https://platform.openai.com/docs/pricing), [DeepSeek](https://api-docs.deepseek.com/quick_start/pricing).
+
+## Example of Use Cases
+
+### Project Documentation
+
+For large projects with many SQL files, you can use SQL Dependency Extractor to generate comprehensive documentation of database dependencies:
+
+```bash
+# Scan an entire project directory recursively
+sqldeps /path/to/project -r -o project_dependencies.json
+
+# Or process specific folders with SQL queries
+sqldeps /path/to/project/queries -r --db-match-schema -o project_db_report.csv
+```
+
+This documentation helps teams understand exactly which database objects are required by their code, making schema changes safer and migrations more predictable.
+
+## Example Output
+
+The tool extracts dependencies in a structured format:
+
+```json
+{
+  "tables": [
+    "customers",
+    "orders",
+    "products"
+  ],
+  "columns": {
+    "customers": [
+      "customer_id",
+      "email",
+      "name"
+    ],
+    "orders": [
+      "customer_id",
+      "order_date",
+      "order_id",
+      "product_id"
+    ],
+    "products": [
+      "name",
+      "price",
+      "product_id"
+    ]
+  }
+}
+```
+
+## Testing
+
+Run unit tests:
+```bash
+pytest -vv
+```
+
+You can specify custom framework, models, and SQL files for testing. Please refer to [merge request !13](https://gitlab.com/gibbs-lab/database/sql-dependency-extractor/-/merge_requests/13) for details.
+
+## Current Limitations
+
+- Currently, only hosted LLMs are available for usage
+- Currently, only PostgreSQL is supported for schema validation
+
+## Roadmap
+
+- Annotate more SQL files to re-evaluate model performance
+- Implement support for more SQL dialects (MySQL, etc.)
+- Add feature to allow user integration of local & hosted LLMs through custom Python code using `BaseSQLExtractor`
+- Allow users to use specific SQL dialect connections through custom Python code using `SQLBaseConnector`
+
+## License
+
+TBD
+
+================================================================================
+
+File: README_PyPI.md
+--------------------------------------------------------------------------------
+# SQL Dependency Extractor
+
+TBD
+
+================================================================================
+
+File: app/main.py
+--------------------------------------------------------------------------------
+import json
+import os
+import tempfile
+from pathlib import Path
+
+import pandas as pd
+import sqlparse
+import streamlit as st
+
+from sqldeps.database import PostgreSQLConnector
+
+# Import the necessary components from sqldeps
+from sqldeps.llm_parsers import create_extractor
+
+st.set_page_config(
+    page_title="SQL Dependency Extractor",
+    page_icon="🔍",
+    layout="wide",
+)
+
+
+def main() -> None:  # noqa: C901
+    st.title("SQL Dependency Extractor")
+    st.sidebar.header("Configuration")
+
+    # Framework selection
+    framework = st.sidebar.selectbox(
+        "Select Framework",
+        options=["groq", "openai", "deepseek"],
+        index=0,
+    )
+
+    # Model selection based on framework
+    model_options = {
+        "groq": [
+            "llama-3.3-70b-versatile",
+            "gemma2-9b-it",
+            "llama-3.1-8b-instant",
+            "llama3-70b-8192",
+            "llama3-8b-8192",
+            "mixtral-8x7b-32768",
+        ],
+        "openai": ["gpt-4o", "gpt-4o-mini"],
+        "deepseek": ["deepseek-chat"],
+    }
+
+    model = st.sidebar.selectbox(
+        "Select Model",
+        options=model_options[framework],
+        index=0,
+    )
+
+    # Custom prompt file upload
+    st.sidebar.subheader("Custom Prompt (Optional)")
+    prompt_file = st.sidebar.file_uploader(
+        "Upload custom prompt YAML file", type=["yml", "yaml"]
+    )
+
+    # Database connection section
+    st.sidebar.subheader("Database Connection (Optional)")
+    enable_db = st.sidebar.checkbox("Enable Database Schema Validation")
+
+    db_config = {}
+    if enable_db:
+        db_config["host"] = st.sidebar.text_input("Host", value="52.14.34.84")
+        db_config["port"] = st.sidebar.number_input(
+            "Port", value=5432, min_value=1, max_value=65535
+        )
+        db_config["database"] = st.sidebar.text_input(
+            "Database Name", value="gibbs-5.0"
+        )
+        db_config["username"] = st.sidebar.text_input("Username")
+        # Password is handled through .env or ~/.pgpass
+        db_target_schemas = st.sidebar.text_input(
+            "Target Schemas (comma-separated)", value="public"
+        )
+
+        st.sidebar.info("Password should be set in .env as DB_PASSWORD or in ~/.pgpass")
+
+    # SQL Input
+    st.sidebar.subheader("SQL Input")
+    input_method = st.sidebar.radio(
+        "Choose input method",
+        options=["Upload SQL File", "Enter SQL Query"],
+    )
+
+    sql_query = ""
+    uploaded_file = None
+
+    if input_method == "Upload SQL File":
+        uploaded_file = st.sidebar.file_uploader("Upload SQL file", type=["sql"])
+        if uploaded_file is not None:
+            sql_query = uploaded_file.getvalue().decode("utf-8")
+    else:
+        sql_query = st.sidebar.text_area(
+            "Enter SQL Query",
+            height=300,
+            placeholder="SELECT * FROM table WHERE condition...",
+        )
+
+    # Execute button
+    process_button = st.sidebar.button("Extract Dependencies", type="primary")
+
+    # Create two columns for the main content
+    col1, col2 = st.columns(2)
+
+    if process_button and (uploaded_file or sql_query):
+        try:
+            with st.spinner("Extracting dependencies..."):
+                # Format SQL for display
+                formatted_sql = sqlparse.format(
+                    sql_query, reindent=True, keyword_case="upper"
+                )
+
+                # Initialize extractor
+                temp_prompt_path = None
+                if prompt_file:
+                    # Create a temporary file to save the uploaded prompt
+                    with tempfile.NamedTemporaryFile(
+                        suffix=".yml", delete=False
+                    ) as temp_file:
+                        temp_file.write(prompt_file.getvalue())
+                        temp_prompt_path = Path(temp_file.name)
+
+                extractor = create_extractor(
+                    framework=framework, model=model, prompt_path=temp_prompt_path
+                )
+
+                # Extract dependencies
+                if uploaded_file:
+                    # Create a temporary SQL file
+                    with tempfile.NamedTemporaryFile(
+                        suffix=".sql", delete=False
+                    ) as temp_sql_file:
+                        temp_sql_file.write(uploaded_file.getvalue())
+                        sql_file_path = Path(temp_sql_file.name)
+
+                    dependencies = extractor.extract_from_file(sql_file_path)
+                    # Clean up temporary file
+                    os.unlink(sql_file_path)
+                else:
+                    dependencies = extractor.extract_from_query(sql_query)
+
+                # Database validation if enabled
+                db_schema_match = None
+                if (
+                    enable_db
+                    and db_config.get("host")
+                    and db_config.get("database")
+                    and db_config.get("username")
+                ):
+                    try:
+                        # Password is retrieved from .env or ~/.pgpass
+                        conn = PostgreSQLConnector(
+                            host=db_config["host"],
+                            port=db_config["port"],
+                            database=db_config["database"],
+                            username=db_config["username"],
+                        )
+                        target_schemas = [
+                            schema.strip() for schema in db_target_schemas.split(",")
+                        ]
+                        db_schema_match = extractor.match_database_schema(
+                            dependencies,
+                            db_connection=conn,
+                            target_schemas=target_schemas,
+                        )
+                        st.sidebar.success("Database connection successful")
+                    except Exception as e:
+                        st.sidebar.error(f"Database connection failed: {e!s}")
+
+                # Clean up temporary prompt file if it exists
+                if temp_prompt_path:
+                    os.unlink(temp_prompt_path)
+
+                # Display formatted SQL in left column
+                with col1:
+                    st.subheader("SQL Query")
+                    st.code(formatted_sql, language="sql")
+
+                # Display results in right column
+                with col2:
+                    st.subheader("Extracted Dependencies")
+
+                    # Show tables using a more structured approach
+                    st.markdown("#### Tables")
+                    if dependencies.tables:
+                        table_df = pd.DataFrame({"Table Name": dependencies.tables})
+                        st.dataframe(
+                            table_df, use_container_width=True, hide_index=True
+                        )
+                    else:
+                        st.info("No tables found")
+
+                    # Show columns using expanders for each table
+                    st.markdown("#### Columns by Table")
+                    if dependencies.columns:
+                        for table_name, columns in dependencies.columns.items():
+                            with st.expander(f"Table: {table_name}"):
+                                if columns:
+                                    if "*" in columns:
+                                        st.write("All columns (*)")
+                                    else:
+                                        columns_df = pd.DataFrame(
+                                            {"Column Name": columns}
+                                        )
+                                        st.dataframe(
+                                            columns_df,
+                                            use_container_width=True,
+                                            hide_index=True,
+                                        )
+                                else:
+                                    st.write("No specific columns identified")
+                    else:
+                        st.info("No columns found")
+
+                    # Show database validation results if available
+                    if db_schema_match is not None:
+                        st.markdown("#### Database Schema Validation")
+                        validation_tabs = st.tabs(
+                            ["All Results", "Matches Only", "Missing Only"]
+                        )
+
+                        with validation_tabs[0]:
+                            st.dataframe(db_schema_match, use_container_width=True)
+
+                        with validation_tabs[1]:
+                            matches = db_schema_match[
+                                db_schema_match["exact_match"] is True
+                            ]
+                            if not matches.empty:
+                                st.dataframe(matches, use_container_width=True)
+                            else:
+                                st.info("No exact matches found")
+
+                        with validation_tabs[2]:
+                            missing = db_schema_match[
+                                db_schema_match["exact_match"] is False
+                            ]
+                            if not missing.empty:
+                                st.dataframe(missing, use_container_width=True)
+                            else:
+                                st.success("All dependencies found in database schema!")
+
+                    # Display as DataFrame
+                    if dependencies.to_dict()["tables"]:
+                        st.markdown("#### As DataFrame")
+                        df = dependencies.to_dataframe()
+                        st.dataframe(df, use_container_width=True)
+
+                    # Display raw JSON
+                    st.markdown("#### Raw JSON")
+                    st.json(dependencies.to_dict())
+
+                    # Download buttons with additional option for DB validation
+                    download_cols = (
+                        st.columns(3) if db_schema_match is not None else st.columns(2)
+                    )
+
+                    with download_cols[0]:
+                        # If we have database validation results, include data_type
+                        if db_schema_match is not None:
+                            # Use the validated schema that includes data types
+                            csv = db_schema_match.to_csv(index=False)
+                            filename = "dependencies_with_types.csv"
+                        else:
+                            # Use the simple extraction without data types
+                            csv = dependencies.to_dataframe().to_csv(index=False)
+                            filename = "dependencies.csv"
+
+                        st.download_button(
+                            label="Download CSV",
+                            data=csv,
+                            file_name=filename,
+                            mime="text/csv",
+                        )
+
+                    with download_cols[1]:
+                        json_data = json.dumps(dependencies.to_dict(), indent=2)
+                        st.download_button(
+                            label="Download JSON",
+                            data=json_data,
+                            file_name="dependencies.json",
+                            mime="application/json",
+                        )
+
+                    if db_schema_match is not None and len(download_cols) > 2:
+                        with download_cols[2]:
+                            # Add option to download just the validation matches
+                            matches_only = db_schema_match[
+                                db_schema_match["exact_match"] is True
+                            ]
+                            if not matches_only.empty:
+                                validation_csv = matches_only.to_csv(index=False)
+                                st.download_button(
+                                    label="Download Exact Matches",
+                                    data=validation_csv,
+                                    file_name="exact_matches.csv",
+                                    mime="text/csv",
+                                )
+
+        except Exception as e:
+            st.error(f"Error extracting dependencies: {e!s}")
+            st.exception(e)
+
+    # Display instructions if no query is provided
+    if not process_button or (not uploaded_file and not sql_query):
+        with col1:
+            st.info(
+                "Enter a SQL query or upload a SQL file and click "
+                "'Extract Dependencies' to analyze."
+            )
+
+            st.markdown("""
+            ### Instructions
+            1. Select your preferred LLM framework and model
+            2. Optionally upload a custom prompt YAML file
+            3. Either upload a SQL file or enter a SQL query
+            4. Click 'Extract Dependencies' to analyze
+            """)
+
+        with col2:
+            st.info("Dependency results will appear here.")
+
+            st.markdown("""
+            ### About
+            This app extracts table and column dependencies from SQL queries using:
+            - Various LLM frameworks (Groq, OpenAI, DeepSeek)
+            - Custom prompts (optional)
+            - Database schema validation (optional)
+            - Formatted display of dependencies
+
+            The results include:
+            - List of referenced tables
+            - Columns used from each table
+            - DataFrame representation
+            - Database validation (when enabled)
+            - Downloadable CSV and JSON formats
+            """)
+
+
+if __name__ == "__main__":
+    main()
+
+================================================================================
+
+File: pyproject.toml
+--------------------------------------------------------------------------------
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sqldeps"
+version = "0.0.3"
+description = "SQL Dependency Extractor"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+authors = [
+    {name = "Cainã Silva", email = "coutodasilva@wisc.edu"},
+    {name = "Matt Christie", email = "mjchristie@wisc.edu"}
+]
+readme = "README_PyPI.md"
+keywords = ["sql", "dependency", "parser", "extractor", "llm"]
+dependencies = [
+    "groq>=0.17.0",
+    "loguru>=0.7.3",
+    "openai>=1.59.5",
+    "pandas>=2.2.3",
+    "psycopg2>=2.9.10",
+    "python-dotenv>=1.0.1",
+    "pyyaml>=6.0.2",
+    "sqlalchemy>=2.0.37",
+    "sqlparse>=0.5.3",
+    "typer>=0.15.1",
+]
+
+[project.optional-dependencies]
+app = [
+    "streamlit>=1.42.1",
+]
+
+[project.scripts]
+sqldeps = "sqldeps.cli:app"
+
+[tool.pytest.ini_options]
+pythonpath = "."
+testpaths = ["tests"]
+markers = [
+    "llm: marks tests that require LLM API calls (skipped by default)",
+]
+# Skip LLM tests by default unless explicitly requested
+addopts = "-m 'not llm'"
+
+[tool.hatch.metadata]
+allow-direct-references = false
+
+[tool.hatch.build]
+packages = ["sqldeps"]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.6.12",
+    "pytest>=8.3.4",
+    "ruff>=0.9.7",
+]
+docs = [
+    "mkdocs>=1.6.1",
+]
+analysis = [
+    "ipykernel>=6.29.5",
+    "seaborn>=0.13.2",
+    "tabulate>=0.9.0",
+]
+
+[tool.uv]
+default-groups = ["dev", "docs", "analysis"]
+
+[tool.ruff]
+# Same as Black.
+line-length = 88
+indent-width = 4
+exclude = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = [
+    "F", # Pyflakes
+    "E", "W", # pycodestyle
+    "I",  # isort
+    "N",  # pep8-naming
+    "Q",  # flake8-quotes
+    "UP", # pyupgrade
+    # "D",  # pydocstyle
+    "RUF",  # Ruff-specific rules
+    "B",    # flake8-bugbear
+    # "T20",  # print found
+    "C90",  # mccabe (complex structures)
+    "SIM",  # flake8-simplify
+    # "ANN",  # flake8-annotations
+    "TID",  # flake8-tidy-imports
+]
+ignore = ["B008","B904"]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+================================================================================
+
+File: scripts/evaluate.py
+--------------------------------------------------------------------------------
+from datetime import datetime
+from glob import glob
+from pathlib import Path
+
+import pandas as pd
+from loguru import logger
+from tqdm import tqdm
+
+from sqldeps.evaluate import evaluate_extraction_performance
+
+# PARAMETERS
+OUTPUT_DIR = "outputs"
+
+# Table with model pricings
+df_model_metadata = pd.DataFrame(
+    [
+        ("groq", "gemma2-9b-it", 0.20, 0.20),
+        ("groq", "llama-3.3-70b-versatile", 0.59, 0.79),
+        ("groq", "llama-3.1-8b-instant", 0.05, 0.08),
+        ("groq", "mixtral-8x7b-32768", 0.24, 0.24),
+        ("groq", "deepseek-r1-distill-llama-70b", 0.75, 0.99),
+        ("openai", "gpt-4o", 2.50, 10),
+        ("openai", "gpt-4o-mini", 0.15, 0.60),
+        ("deepseek", "deepseek-chat", 0.27, 1.10),
+    ],
+    columns=["framework", "model", "input_price", "output_price"],
+)
+
+sql_files = [f"tests/test_sql/example{i}.sql" for i in range(1, 11)]
+json_files = [f"tests/test_sql_outputs/example{i}_expected.json" for i in range(1, 11)]
+
+# [(row.framework, row.model) for row in df_model_metadata.itertuples()]
+models = [
+    ("groq", "gemma2-9b-it"),
+    ("groq", "llama-3.3-70b-versatile"),
+    ("groq", "llama-3.1-8b-instant"),
+    ("groq", "mixtral-8x7b-32768"),
+    ("groq", "deepseek-r1-distill-llama-70b"),
+    ("openai", "gpt-4o"),
+    ("openai", "gpt-4o-mini"),
+    ("deepseek", "deepseek-chat"),
+]
+
+prompts = [
+    "configs/prompts/default.yml",
+    "configs/prompts/custom.yml",
+    "configs/prompts/one_shot_default.yml",
+    "configs/prompts/one_shot_custom.yml",
+]
+
+# Set Paths
+today = datetime.now().strftime("%Y%m%d")
+output_path = Path(OUTPUT_DIR) / Path(today)
+output_raw_path = Path(output_path) / Path("raw")
+
+# Create directories
+output_raw_path.mkdir(parents=True, exist_ok=True)
+
+# Run extractions
+for framework, model in models:
+    for prompt in prompts:
+        output_file_path = (
+            output_raw_path / f"{framework}_{model}_{Path(prompt).stem}.csv"
+        )
+
+        if output_file_path.exists():
+            continue
+
+        logger.info(
+            f"Running extraction for {framework}={model} and prompt={Path(prompt).stem}"
+        )
+
+        results = []
+        for sql_file, json_file in tqdm(zip(sql_files, json_files, strict=False)):
+            # Compute performance
+            result = evaluate_extraction_performance(
+                framework=framework,
+                model=model,
+                sql_file=sql_file,
+                expected_json_file=json_file,
+                prompt_path=prompt,
+            )
+            # Store performance
+            results.append(result)
+
+        # Save results for specific framework-model-prompt
+        df_results = pd.DataFrame(results)
+        df_results.to_csv(output_file_path, index=False)
+        logger.success(f"Results saved into {output_file_path}\n")
+
+# Agregate results
+
+files = glob(f"{output_raw_path}/*csv")
+df_results = pd.concat([pd.read_csv(file) for file in files])
+
+df_summary = (
+    df_results.groupby(["framework", "model", "prompt"])
+    .agg(
+        all_exact_match=("exact_match", "all"),
+        exact_match_pct=("exact_match", "mean"),
+        all_tbl_in_cols=("all_tables_in_columns", "all"),
+        tbl_in_cols_pct=("all_tables_in_columns", "mean"),
+        tbl_recall_avg=("tbl_recall", "mean"),
+        tbl_precision_avg=("tbl_precision", "mean"),
+        tbl_f1_avg=("tbl_f1", "mean"),
+        col_recall_avg=("col_recall", "mean"),
+        col_precision_avg=("col_precision", "mean"),
+        col_f1_avg=("col_f1", "mean"),
+        avg_exec_time=("exec_time", "mean"),
+    )
+    .reset_index()
+)
+
+df_summary = df_summary.merge(df_model_metadata)
+df_summary["prompt"] = df_summary["prompt"].str[:-4]
+df_summary["avg_price"] = df_summary[["input_price", "output_price"]].mean(axis=1)
+df_summary["total_price"] = df_summary[["input_price", "output_price"]].sum(axis=1)
+
+# Save aggregated results
+df_summary.to_csv(output_path / "summary.csv", index=False)
+
+================================================================================
+
+File: scripts/extract_from_csv.py
+--------------------------------------------------------------------------------
+from pathlib import Path
+
+import pandas as pd
+import typer
+from loguru import logger
+from tqdm import tqdm
+
+from sqldeps.llm_parsers import create_extractor
+
+
+def main(
+    csv_input_path: Path = typer.Argument(
+        ..., help="Input CSV file path", exists=True, dir_okay=False, resolve_path=True
+    ),
+    framework: str | None = typer.Option(
+        "groq", help="LLM framework to use [groq, openai, deepseek]"
+    ),
+    model: str | None = typer.Option(None, help="Model name for selected framework"),
+    prompt: Path | None = typer.Option(
+        None,
+        help="Path to custom prompt YAML file",
+        exists=True,
+        dir_okay=False,
+        resolve_path=True,
+    ),
+    csv_output_path: Path | None = typer.Option(
+        Path("sql_dependencies.csv"), help="Output CSV file path"
+    ),
+    sql_input_col: str | None = typer.Option(
+        "function_def", help="Existing column containing SQL queries"
+    ),
+    sql_output_col: str | None = typer.Option(
+        "sqldeps", help="New column to store dependencies"
+    ),
+    maximum_rows: int | None = typer.Option(
+        None, help="Maximum number of rows to process (None for all)"
+    ),
+) -> None:
+    """Extract SQL dependencies from a CSV file containing SQL queries"""
+    try:
+        # Initialize extractor
+        extractor = create_extractor(framework, model, prompt_path=prompt)
+        logger.info(
+            f"Processing {csv_input_path} using {framework.title()} "
+            f"and {extractor.model}"
+        )
+
+        # Read and optionally sample data with first rows
+        df = pd.read_csv(csv_input_path)
+        if maximum_rows:
+            df = df.head(maximum_rows)
+            logger.info(f"Using first {maximum_rows} rows")
+
+        # Extract dependencies
+        tqdm.pandas(desc="Processing SQL queries")
+        df[sql_output_col] = df[sql_input_col].progress_apply(
+            lambda x: extractor.extract_from_query(x).to_dict()
+        )
+        # Save results
+        df.to_csv(csv_output_path, index=False)
+        logger.success(f"Results saved to {csv_output_path}")
+
+    except Exception:
+        logger.exception("Processing failed")
+        raise typer.Exit(code=1)
+
+
+if __name__ == "__main__":
+    typer.run(main)
+
+================================================================================
+
+File: sqldeps/__init__.py
+--------------------------------------------------------------------------------
+from importlib.metadata import version
+
+__version__ = version("sqldeps")
+
+================================================================================
+
+File: sqldeps/cli.py
+--------------------------------------------------------------------------------
+import json
+from pathlib import Path
+from typing import Annotated
+
+import typer
+from loguru import logger
+
+from sqldeps.llm_parsers import BaseSQLExtractor, create_extractor
+
+# Create the main Typer app
+app = typer.Typer(
+    name="sqldeps",
+    help=(
+        "SQL Dependency Extractor - "
+        "Analyze SQL files to extract table and column dependencies"
+    ),
+    add_completion=True,
+)
+
+
+def extract_dependencies(
+    extractor: BaseSQLExtractor, fpath: Path, recursive: bool
+) -> dict:
+    """Extract dependencies from a file or directory."""
+    logger.info(
+        f"Extracting dependencies from {'file' if fpath.is_file() else 'folder'}: "
+        f"{fpath}"
+    )
+    dependencies = (
+        extractor.extract_from_file(fpath)
+        if fpath.is_file()
+        else extractor.extract_from_folder(fpath, recursive=recursive)
+    )
+    return dependencies
+
+
+def match_dependencies_against_schema(
+    extractor: BaseSQLExtractor,
+    dependencies: dict,
+    db_target_schemas: str,
+    db_credentials: Path | None,
+) -> dict:
+    """Match extracted dependencies against a database schema."""
+    logger.info("Retrieving schema from database...")
+    schemas = [s.strip() for s in db_target_schemas.split(",")]
+    db_dependencies = extractor.match_database_schema(
+        dependencies, target_schemas=schemas, db_config_path=db_credentials
+    )
+    return db_dependencies
+
+
+def save_output(
+    dependencies: dict, output_path: Path, is_schema_match: bool = False
+) -> None:
+    """Save extracted dependencies to the specified output format."""
+    if output_path.suffix.lower() == ".csv":
+        df_output = dependencies if is_schema_match else dependencies.to_dataframe()
+        df_output.to_csv(output_path, index=False)
+        logger.success(f"Saved to CSV: {output_path}")
+    else:
+        json_output = dependencies.to_dict()
+        output_path = output_path.with_suffix(".json")
+        with open(output_path, "w") as f:
+            json.dump(json_output, f, indent=2)
+        logger.success(f"Saved to JSON: {output_path}")
+
+
+@app.command()
+def main(
+    fpath: Annotated[
+        Path,
+        typer.Argument(
+            help="SQL file or directory path",
+            exists=True,
+            dir_okay=True,
+            file_okay=True,
+            resolve_path=True,
+        ),
+    ],
+    framework: Annotated[
+        str,
+        typer.Option(
+            help="LLM framework to use [groq, openai, deepseek]",
+            case_sensitive=False,
+        ),
+    ] = "groq",
+    model: Annotated[
+        str | None, typer.Option(help="Model name for the selected framework")
+    ] = None,
+    prompt: Annotated[
+        Path | None,
+        typer.Option(
+            help="Path to custom prompt YAML file",
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+        ),
+    ] = None,
+    recursive: Annotated[
+        bool,
+        typer.Option("--recursive", "-r", help="Recursively scan folder for SQL files"),
+    ] = False,
+    db_match_schema: Annotated[
+        bool, typer.Option(help="Match dependencies against database schema")
+    ] = False,
+    db_target_schemas: Annotated[
+        str,
+        typer.Option(help="Comma-separated list of target schemas to validate against"),
+    ] = "public",
+    db_credentials: Annotated[
+        Path | None,
+        typer.Option(
+            help="Path to database credentials YAML file",
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+        ),
+    ] = None,
+    output: Annotated[
+        Path,
+        typer.Option(
+            "--output", "-o", help="Output file path for extracted dependencies"
+        ),
+    ] = Path("dependencies.json"),
+) -> None:
+    """Extract SQL dependencies from file or folder.
+
+    This tool analyzes SQL files to identify table and column dependencies,
+    optionally validating them against a real database schema.
+    """
+    try:
+        extractor = create_extractor(
+            framework=framework, model=model, prompt_path=prompt
+        )
+        dependencies = extract_dependencies(extractor, fpath, recursive)
+
+        if db_match_schema:
+            dependencies = match_dependencies_against_schema(
+                extractor, dependencies, db_target_schemas, db_credentials
+            )
+
+        save_output(dependencies, output, is_schema_match=db_match_schema)
+
+    except Exception as e:
+        logger.error(f"Error extracting dependencies: {e}")
+        raise typer.Exit(code=1)
+
+
+if __name__ == "__main__":
+    app()
+
+================================================================================
+
+File: sqldeps/config.py
+--------------------------------------------------------------------------------
+import yaml
+
+
+def load_config(config_path):
+    with open(config_path) as config_file:
+        config = yaml.safe_load(config_file)
+    return config
+
+================================================================================
+
+File: sqldeps/database/__init__.py
+--------------------------------------------------------------------------------
+from .postgresql import PostgreSQLConnector
+
+__all__ = ["PostgreSQLConnector"]
+
+================================================================================
+
+File: sqldeps/database/base.py
+--------------------------------------------------------------------------------
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class SQLBaseConnector(ABC):
+    """Abstract base class for SQL database connections and schema inspection.
+
+    Provides interface for:
+    - Database connection with multiple configuration sources
+    - Schema inspection and export
+    - Engine-specific connection handling
+    """
+
+    @abstractmethod
+    def __init__(
+        self,
+        host: str | None = None,
+        port: int | None = None,
+        database: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        config_path: Path | None = None,
+    ) -> None:
+        """Initialize database connection."""
+        pass
+
+    @abstractmethod
+    def _create_engine(self, params: dict[str, Any]):
+        """Create database engine with given parameters."""
+        pass
+
+    @abstractmethod
+    def _load_config(self, config_path: Path | None) -> dict[str, Any]:
+        """Load configuration from file."""
+        pass
+
+    @abstractmethod
+    def _get_env_vars(self) -> dict[str, Any]:
+        """Get environment variables for connection."""
+        pass
+
+    @abstractmethod
+    def _resolve_params(
+        self,
+        host: str | None,
+        port: int | None,
+        database: str | None,
+        username: str | None,
+        password: str | None,
+        config_path: Path | None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """Resolve connection parameters from all sources."""
+        pass
+
+    @abstractmethod
+    def get_schema(self, schemas: str | list[str] | None = None) -> pd.DataFrame:
+        """Get database schema information."""
+        pass
+
+    def export_schema_csv(self, path: str) -> None:
+        """Export schema to CSV file."""
+        df = self.get_schema()
+        df.to_csv(path, index=False)
+
+================================================================================
+
+File: sqldeps/database/postgresql.py
+--------------------------------------------------------------------------------
+import os
+from pathlib import Path
+from typing import Any
+from urllib.parse import quote_plus
+
+import pandas as pd
+import yaml
+from loguru import logger
+from sqlalchemy import create_engine, inspect
+
+from .base import SQLBaseConnector
+
+
+class PostgreSQLConnector(SQLBaseConnector):
+    """PostgreSQL database utility class that provides secure connection management and
+    schema inspection capabilities.
+
+    Supports multiple configuration sources for database connection parameters:
+    - Direct parameters in constructor
+    - YAML configuration file
+    - Environment variables (.env file)
+    - PostgreSQL password file (~/.pgpass)
+
+    Configuration priority for host, port, database, and username (highest to lowest):
+    1. Direct parameters in constructor
+    2. YAML config file
+    3. Environment variables
+    4. .pgpass for password lookup
+    """
+
+    def __init__(
+        self,
+        host: str | None = None,
+        port: int | None = None,
+        database: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        config_path: Path | None = None,
+    ) -> None:
+        """Initialize database connection with provided configuration.
+
+        Args:
+            host: Database host address
+            port: Database port (default: 5432)
+            database: Database name
+            username: Database username
+            password: Database password
+            config_path: Path to optional YAML config file
+
+        Required Parameters:
+            The following must be provided through one of the configuration sources:
+            - host
+            - database
+            - username
+            - password (either through .pgpass or other sources)
+
+        Environment Variables:
+            DB_HOST: Database host
+            DB_PORT: Database port
+            DB_NAME: Database name
+            DB_USER: Database username
+            DB_PASSWORD: Database password
+
+        YAML Config Format:
+            database:
+                host: localhost
+                port: 5432
+                database: mydb
+                username: user
+                password: pass
+        """
+        # Load and validate connection parameters
+        connection_params = self._resolve_params(
+            host, port, database, username, password, config_path
+        )
+
+        # Create engine
+        self.engine = self._create_engine(connection_params)
+        self.inspector = inspect(self.engine)
+
+    def _load_config(self, config_path: Path | None) -> dict[str, Any]:
+        """Load optional YAML config file if provided."""
+        if not config_path:
+            return {}
+
+        try:
+            with open(config_path) as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            logger.warning(f"Failed to load config file: {e}")
+            return {}
+
+    def _get_env_vars(self) -> dict[str, Any]:
+        """Extract environment variables with standard PostgreSQL naming."""
+        return {
+            "host": os.getenv("DB_HOST"),
+            "port": os.getenv("DB_PORT"),
+            "database": os.getenv("DB_NAME"),
+            "username": os.getenv("DB_USER"),
+            "password": os.getenv("DB_PASSWORD"),
+        }
+
+    def _get_password_from_pgpass(
+        self,
+        username: str,
+        host: str,
+        database: str,
+        port: str | int,
+        password: None,
+    ) -> str | None:
+        """Attempt to find matching password in .pgpass file.
+
+        Args:
+            username: Database username
+            host: Database host
+            database: Database name
+            port: Database port
+            password: placeholder to enable receiving all params retrieved from the
+            other sources
+
+        Returns:
+            Matching password if found, None otherwise
+        """
+        pgpass_path = Path.home() / ".pgpass"
+
+        try:
+            input_creds = [str(host), str(port), database, username]
+
+            with open(pgpass_path) as f:
+                for line in f:
+                    line = line.strip()
+
+                    # Skip comments
+                    if line.startswith("#"):
+                        continue
+
+                    (
+                        pgpass_host,
+                        pgpass_port,
+                        pgpass_database,
+                        pgpass_username,
+                        pgpass_password,
+                    ) = line.split(":")
+                    pgpass_creds = [
+                        pgpass_host,
+                        pgpass_port,
+                        pgpass_database,
+                        pgpass_username,
+                    ]
+
+                    pgpass_matches = True
+                    for input_item, pgpass_item in zip(
+                        input_creds, pgpass_creds, strict=False
+                    ):
+                        if pgpass_item == "*":
+                            continue
+                        if pgpass_item != input_item:
+                            pgpass_matches = False
+                            break
+
+                    if pgpass_matches:
+                        return pgpass_password
+
+        except Exception as e:
+            logger.warning(f"Failed to read .pgpass file: {e}")
+
+        return None
+
+    def _resolve_params(
+        self,
+        host: str | None,
+        port: int | None,
+        database: str | None,
+        username: str | None,
+        password: str | None,
+        config_path: Path | None,
+    ) -> dict[str, Any]:
+        """Resolve connection parameters using priority hierarchy.
+
+        For host, port, database, and username:
+        1. Direct parameters
+        2. Config file
+        3. Environment variables
+
+        When the password is not provided through the sources above:
+            - Look up in .pgpass using the provided credentials
+        """
+        params = {
+            "host": None,
+            "port": 5432,  # Default PostgreSQL port
+            "database": None,
+            "username": None,
+            "password": None,
+        }
+
+        # Load all potential sources
+        config_params = self._load_config(config_path).get("database", {})
+        env_vars = self._get_env_vars()
+        direct_params = {
+            "host": host,
+            "port": port,
+            "database": database,
+            "username": username,
+            "password": password,
+        }
+
+        # Apply sources in priority order for all params except password
+        sources = [
+            env_vars,  # Lowest priority
+            config_params,  # Second priority
+            direct_params,  # Highest priority
+        ]
+
+        for source in sources:
+            for key in params:
+                if source.get(key) is not None:
+                    params[key] = source[key]
+
+        # Validate required non-password parameters
+        if not all([params["host"], params["database"], params["username"]]):
+            raise ValueError(
+                "Missing required database parameters (host, database, or username). "
+                "Must be provided through direct parameters, config file or "
+                "environment variables."
+            )
+
+        # Fall back to .pgpass for password lookup
+        if not params["password"]:
+            params["password"] = self._get_password_from_pgpass(**params)
+
+            # Validate password
+            if not params["password"]:
+                raise ValueError(
+                    f"Missing password for user {params['username']}. "
+                    "Must be provided through direct parameters, "
+                    "config file, environment variables, or available at .pgpass"
+                )
+
+        return params
+
+    def _create_engine(self, params: dict[str, Any]):
+        """Create SQLAlchemy engine without storing credentials."""
+        connection_string = (
+            f"postgresql://{params['username']}:{quote_plus(params['password'])}@"
+            f"{params['host']}:{params['port']}/{params['database']}"
+        )
+
+        # Clear sensitive data
+        params.clear()
+
+        return create_engine(connection_string, connect_args={"connect_timeout": 10})
+
+    def get_schema(self, schemas: str | list[str] | None = None) -> pd.DataFrame:
+        """Retrieve database schema information as a DataFrame.
+
+        Args:
+            schemas: Optional schema name or list of schema names to filter results.
+                    If None, returns information for all schemas.
+
+        Returns:
+            DataFrame with columns: schema, table, column, data_type
+        """
+        if schemas is None:
+            schema_list = self.inspector.get_schema_names()
+        elif isinstance(schemas, str):
+            schema_list = [schemas]
+        elif isinstance(schemas, list):
+            schema_list = schemas
+        else:
+            raise TypeError("schemas must be None, string, or list of strings")
+
+        schema_data = []
+        for schema in schema_list:
+            for table_name in self.inspector.get_table_names(schema=schema):
+                for column in self.inspector.get_columns(table_name, schema=schema):
+                    schema_data.append(
+                        {
+                            "schema": schema,
+                            "table": table_name,
+                            "column": column["name"],
+                            "data_type": str(column["type"]),
+                        }
+                    )
+
+        return pd.DataFrame(schema_data)
+
+    def export_schema_csv(self, path: str) -> None:
+        """Export schema to CSV."""
+        df = self.get_schema_df()
+        df.to_csv(path, index=False)
+
+================================================================================
+
+File: sqldeps/evaluate.py
+--------------------------------------------------------------------------------
+import json
+import os
+import time
+
+from sqldeps.llm_parsers import create_extractor
+
+
+def run_extractor_with_retry(extractor, sql, max_trials=3, sleep_time=10):
+    """Runs the extractor and measures execution time, with retry logic.
+
+    Args:
+        extractor: The extractor object with an extract_from_query method.
+        sql: The SQL query string.
+        max_trials: The maximum number of retry attempts.
+        sleep_time: sleep time between trials in seconds.
+
+    Returns:
+        A tuple containing:
+            - The result of the extraction (if successful), or None if all trials fail.
+            - The execution time (if successful), or None if all trials fail.
+    """
+    trials = 0
+    while trials < max_trials:
+        try:
+            start_time = time.time()
+            result = extractor.extract_from_query(sql)
+            execution_time = time.time() - start_time
+            return result, execution_time
+        except Exception as e:
+            trials += 1
+            print(f"Trial {trials} failed: {e}")
+            if trials == max_trials:
+                print(f"All {max_trials} trials failed. Extraction unsuccessful.")
+                return None, None
+            else:
+                time.sleep(sleep_time)
+
+
+def compare_extraction_results(extracted, expected):
+    """Compares extracted SQL dependencies with expected results and
+    calculates performance metrics.
+
+    Args:
+        extracted: Dictionary containing the extracted dependencies
+        expected: Dictionary containing the expected dependencies (ground truth)
+
+    Returns:
+        Dictionary containing detailed comparison metrics
+    """
+    # Calculate metrics for tables
+    expected_tables = set(expected["tables"])
+    extracted_tables = set(extracted["tables"])
+
+    true_positive_tables = expected_tables.intersection(extracted_tables)
+    false_positive_tables = extracted_tables - expected_tables
+    false_negative_tables = expected_tables - extracted_tables
+
+    # Create sets of (table, column) pairs for proper comparison
+    expected_table_columns = set()
+    for table, columns in expected["columns"].items():
+        for column in columns:
+            expected_table_columns.add((table, column))
+
+    extracted_table_columns = set()
+    for table, columns in extracted["columns"].items():
+        for column in columns:
+            extracted_table_columns.add((table, column))
+
+    # Calculate column metrics using the pairs
+    true_positive_columns = len(
+        expected_table_columns.intersection(extracted_table_columns)
+    )
+    false_positive_columns = len(extracted_table_columns - expected_table_columns)
+    false_negative_columns = len(expected_table_columns - extracted_table_columns)
+
+    # Calculate precision and recall
+    table_precision = (
+        len(true_positive_tables) / len(extracted_tables) if extracted_tables else 0
+    )
+    table_recall = (
+        len(true_positive_tables) / len(expected_tables) if expected_tables else 0
+    )
+    table_f1 = (
+        2 * table_precision * table_recall / (table_precision + table_recall)
+        if (table_precision + table_recall)
+        else 0
+    )
+
+    column_precision = (
+        true_positive_columns / (true_positive_columns + false_positive_columns)
+        if (true_positive_columns + false_positive_columns)
+        else 0
+    )
+    column_recall = (
+        true_positive_columns / (true_positive_columns + false_negative_columns)
+        if (true_positive_columns + false_negative_columns)
+        else 0
+    )
+    column_f1 = (
+        2 * column_precision * column_recall / (column_precision + column_recall)
+        if (column_precision + column_recall)
+        else 0
+    )
+
+    # Calculate overall exact match and table coverage
+    exact_match = extracted == expected
+    all_tables_in_columns = all(
+        table in extracted["columns"] for table in extracted["tables"]
+    )
+
+    return {
+        "exact_match": exact_match,
+        "all_tables_in_columns": all_tables_in_columns,
+        "tbl_TP": len(true_positive_tables),
+        "tbl_FP": len(false_positive_tables),
+        "tbl_FN": len(false_negative_tables),
+        "tbl_precision": table_precision,
+        "tbl_recall": table_recall,
+        "tbl_f1": table_f1,
+        "col_TP": true_positive_columns,
+        "col_FP": false_positive_columns,
+        "col_FN": false_negative_columns,
+        "col_precision": column_precision,
+        "col_recall": column_recall,
+        "col_f1": column_f1,
+    }
+
+
+def evaluate_extraction_performance(
+    framework, model, sql_file, expected_json_file, prompt_path=None
+):
+    """Evaluates SQL dependency extraction performance with detailed metrics.
+
+    Args:
+        framework: The LLM framework to use (e.g., "groq", "openai")
+        model: The model name to use
+        sql_file: Path to the SQL file to analyze
+        expected_json_file: Path to the expected results JSON file
+        prompt_path: Optional path to custom prompt file
+
+    Returns:
+        Dictionary containing detailed performance metrics as a flat structure
+    """
+    # Create extractor
+    extractor = create_extractor(
+        framework=framework, model=model, prompt_path=prompt_path
+    )
+
+    # Load SQL code
+    with open(sql_file) as f:
+        sql = f.read()
+
+    # Load expected output (ground truth)
+    with open(expected_json_file) as f:
+        expected = json.load(f)
+
+    # Run extraction
+    result, execution_time = run_extractor_with_retry(extractor, sql, max_trials=5)
+    extracted = result.to_dict()
+
+    # Compare results and get metrics
+    comparison_metrics = compare_extraction_results(extracted, expected)
+
+    # Create final metrics dictionary with metadata
+    metrics = {
+        "framework": framework,
+        "model": model,
+        "prompt": os.path.basename(prompt_path) if prompt_path else "default",
+        "sql_file": os.path.basename(sql_file),
+        **comparison_metrics,
+        "exec_time": execution_time,
+        "extracted_result": json.dumps(extracted),
+        "expected_result": json.dumps(expected),
+    }
+
+    return metrics
+
+================================================================================
+
+File: sqldeps/llm_parsers/__init__.py
+--------------------------------------------------------------------------------
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+from .base import BaseSQLExtractor
+from .deepseek import DeepseekExtractor
+from .groq import GroqExtractor
+from .openai import OpenaiExtractor
+
+load_dotenv(override=True)
+
+DEFAULTS = {
+    "groq": {"class": GroqExtractor, "model": "llama-3.3-70b-versatile"},
+    "openai": {"class": OpenaiExtractor, "model": "gpt-4o"},
+    "deepseek": {"class": DeepseekExtractor, "model": "deepseek-chat"},
+}
+
+
+def create_extractor(
+    framework: str = "groq",
+    model: str | None = None,
+    params: dict | None = None,
+    prompt_path: Path | None = None,
+) -> BaseSQLExtractor:
+    framework = framework.lower()
+    if framework not in DEFAULTS:
+        raise ValueError(
+            f"Unsupported framework: {framework}. "
+            f"Must be one of: {', '.join(DEFAULTS.keys())}"
+        )
+
+    config = DEFAULTS[framework]
+    extractor_class = config["class"]
+    model_name = model or config["model"]
+
+    return extractor_class(model=model_name, params=params, prompt_path=prompt_path)
+
+
+__all__ = ["DeepseekExtractor", "GroqExtractor", "OpenaiExtractor", "create_extractor"]
+
+================================================================================
+
+File: sqldeps/llm_parsers/base.py
+--------------------------------------------------------------------------------
+import importlib.resources as pkg_resources
+import json
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import ClassVar
+
+import pandas as pd
+import sqlparse
+import yaml
+from loguru import logger
+from tqdm import tqdm
+
+from sqldeps.database.base import SQLBaseConnector
+from sqldeps.models import SQLDependency
+from sqldeps.utils import merge_dependencies, merge_schemas
+
+
+class BaseSQLExtractor(ABC):
+    """Mandatory interface for all parsers."""
+
+    VALID_EXTENSIONS: ClassVar[set[str]] = {"sql"}
+
+    @abstractmethod
+    def __init__(
+        self, model: str, params: dict | None = None, prompt_path: Path | None = None
+    ) -> None:
+        """Initialize with model name and vendor-specific params."""
+        self.model = model
+        self.params = params or {}
+        self.prompts = self._load_prompts(prompt_path)
+
+        # Set default temperature to 0 in case it's not specified
+        if "temperature" not in self.params:
+            self.params["temperature"] = 0
+
+    def extract_from_query(self, sql: str) -> SQLDependency:
+        """Core extraction method."""
+        formatted_sql = sqlparse.format(sql, reindent=True, keyword_case="upper")
+        prompt = self._generate_prompt(formatted_sql)
+        response = self._query_llm(prompt)
+        self.last_response = response
+        return self._process_response(response)
+
+    def extract_from_file(self, file_path: str | Path) -> SQLDependency:
+        """Extract dependencies from a SQL file."""
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"SQL file not found: {file_path}")
+
+        with open(file_path) as f:
+            sql = f.read()
+
+        return self.extract_from_query(sql)
+
+    def extract_from_folder(
+        self,
+        folder_path: str | Path,
+        recursive: bool = False,
+        valid_extensions: set[str] | None = None,
+    ) -> SQLDependency:
+        """Extract and merge dependencies from all SQL files in a folder."""
+        folder_path = Path(folder_path)
+        if not folder_path.exists():
+            raise FileNotFoundError(f"Folder not found: {folder_path}")
+
+        if not folder_path.is_dir():
+            raise NotADirectoryError(f"Path is not a directory: {folder_path}")
+
+        # Get all files with valid extensions
+        valid_extensions = self._normalize_extensions(valid_extensions)
+
+        sql_files = [
+            f
+            for f in (folder_path.rglob("*") if recursive else folder_path.glob("*"))
+            if f.suffix.lower().lstrip(".") in valid_extensions
+        ]
+
+        if not sql_files:
+            raise ValueError(f"No SQL files found in: {folder_path}")
+
+        # Extract dependencies from each file
+        dependencies = []
+        for sql_file in tqdm(sql_files):
+            try:
+                dep = self.extract_from_file(sql_file)
+                dependencies.append(dep)
+            except Exception as e:
+                logger.warning(f"Failed to process {sql_file}: {e}")
+                continue
+
+        # Merge all dependencies
+        return merge_dependencies(dependencies)
+
+    def match_database_schema(
+        self,
+        dependencies: SQLDependency,
+        db_connection: SQLBaseConnector,
+        target_schemas: list[str] | None = None,
+    ) -> pd.DataFrame:
+        """Match extracted dependencies against actual database schema.
+
+        Args:
+            dependencies: SQLDependency object containing tables and columns to match
+            db_connection: Database connector instance to use for schema validation
+            target_schemas: Optional list of database schemas to validate against
+            (default: ['public'])
+
+        Returns:
+            pd.DataFrame: Merged schema DataFrame with validation information
+        """
+        # Get schema from the provided connection
+        target_schemas = target_schemas or ["public"]
+        db_schema = db_connection.get_schema(schemas=target_schemas)
+
+        # Convert dependencies to DataFrame
+        extracted_schema = dependencies.to_dataframe()
+
+        # Match schemas
+        return merge_schemas(extracted_schema, db_schema)
+
+    def _load_prompts(self, path: Path | None = None) -> dict:
+        """Load prompts from a YAML file."""
+        if path is None:
+            with (
+                pkg_resources.files("sqldeps.configs.prompts")
+                .joinpath("default.yml")
+                .open("r") as f
+            ):
+                prompts = yaml.safe_load(f)
+        else:
+            with open(path) as f:
+                prompts = yaml.safe_load(f)
+
+        required_keys = {"user_prompt", "system_prompt"}
+        if not all(key in prompts for key in required_keys):
+            raise ValueError(
+                f"Prompt file must contain all required keys: {required_keys}"
+            )
+
+        return prompts
+
+    def _generate_prompt(self, sql: str) -> str:
+        """Generate the prompt for the LLM."""
+        return self.prompts["user_prompt"].format(sql=sql)
+
+    @abstractmethod
+    def _query_llm(self, prompt: str) -> str:
+        """Query the LLM with the generated prompt to generate a response."""
+
+    def _process_response(self, response: str) -> SQLDependency:
+        """Process the LLM response into a SQLDependency object."""
+        try:
+            # Convert result into a dictionary
+            result = json.loads(response)
+
+            if "tables" not in result or "columns" not in result:
+                raise ValueError(
+                    "Missing required keys ('tables', 'columns') in the response."
+                )
+
+            # Convert dictory to SQLDependency
+            return SQLDependency(tables=result["tables"], columns=result["columns"])
+
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to decode JSON: {e}\nResponse: {response}")
+
+    @staticmethod
+    def _normalize_extensions(extensions: set[str] | None) -> set[str]:
+        """Normalize extensions by ensuring they are lowercase without leading dots."""
+        if extensions:
+            return {ext.lstrip(".").lower() for ext in extensions}
+        return BaseSQLExtractor.VALID_EXTENSIONS
+
+================================================================================
+
+File: sqldeps/llm_parsers/deepseek.py
+--------------------------------------------------------------------------------
+import os
+from pathlib import Path
+
+from openai import OpenAI
+
+from sqldeps.llm_parsers.base import BaseSQLExtractor
+
+
+class DeepseekExtractor(BaseSQLExtractor):
+    """DeepSeek-based SQL dependency extractor."""
+
+    # Expected environmental variable with the DeepSeek key
+    ENV_VAR_NAME = "DEEPSEEK_API_KEY"
+
+    def __init__(
+        self,
+        model: str = "deepseek-chat",
+        params: dict | None = None,
+        api_key: str | None = None,
+        prompt_path: Path | None = None,
+    ) -> None:
+        """Initialize DeepSeek extractor."""
+        super().__init__(model, params, prompt_path=prompt_path)
+
+        api_key = api_key or os.getenv(self.ENV_VAR_NAME)
+        if not api_key:
+            raise ValueError(
+                "No API key provided. Either pass api_key parameter or set "
+                f"{self.ENV_VAR_NAME} environment variable."
+            )
+
+        self.client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+
+    def _query_llm(self, user_prompt: str) -> str:
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self.prompts["system_prompt"]},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            stream=False,
+            **self.params,
+        )
+
+        return response.choices[0].message.content
+
+================================================================================
+
+File: sqldeps/llm_parsers/groq.py
+--------------------------------------------------------------------------------
+import os
+from pathlib import Path
+
+from groq import Groq
+
+from sqldeps.llm_parsers.base import BaseSQLExtractor
+
+
+class GroqExtractor(BaseSQLExtractor):
+    """Groq-based SQL dependency extractor."""
+
+    ENV_VAR_NAME = "GROQ_API_KEY"
+
+    def __init__(
+        self,
+        model: str = "llama-3.3-70b-versatile",
+        params: dict | None = None,
+        api_key: str | None = None,
+        prompt_path: Path | None = None,
+    ) -> None:
+        """Initialize Groq extractor."""
+        super().__init__(model, params, prompt_path=prompt_path)
+
+        api_key = api_key or os.getenv(self.ENV_VAR_NAME)
+        if not api_key:
+            raise ValueError(
+                "No API key provided. Either pass api_key parameter or set "
+                f"{self.ENV_VAR_NAME} environment variable."
+            )
+
+        self.client = Groq(api_key=api_key)
+
+    def _query_llm(self, user_prompt: str) -> str:
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self.prompts["system_prompt"]},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            **self.params,
+        )
+
+        return response.choices[0].message.content
+
+================================================================================
+
+File: sqldeps/llm_parsers/openai.py
+--------------------------------------------------------------------------------
+import os
+from pathlib import Path
+
+from openai import OpenAI
+
+from sqldeps.llm_parsers.base import BaseSQLExtractor
+
+
+class OpenaiExtractor(BaseSQLExtractor):
+    """OpenAI-based SQL dependency extractor."""
+
+    # Expected environmental variable with the OpenAI key
+    ENV_VAR_NAME = "OPENAI_API_KEY"
+
+    def __init__(
+        self,
+        model: str = "gpt-4o",
+        params: dict | None = None,
+        api_key: str | None = None,
+        prompt_path: Path | None = None,
+    ) -> None:
+        """Initialize OpenAI extractor."""
+        super().__init__(model, params, prompt_path=prompt_path)
+
+        api_key = api_key or os.getenv(self.ENV_VAR_NAME)
+        if not api_key:
+            raise ValueError(
+                "No API key provided. Either pass api_key parameter or set "
+                f"{self.ENV_VAR_NAME} environment variable."
+            )
+
+        self.client = OpenAI(api_key=api_key)
+
+    def _query_llm(self, user_prompt: str) -> str:
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self.prompts["system_prompt"]},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            **self.params,
+        )
+
+        return response.choices[0].message.content
+
+================================================================================
+
+File: sqldeps/models.py
+--------------------------------------------------------------------------------
+from dataclasses import dataclass
+
+import pandas as pd
+
+
+@dataclass
+class SQLDependency:
+    """Data class to hold SQL dependency information."""
+
+    tables: list[str]
+    columns: dict[str, list[str]]
+
+    def __post_init__(self):
+        self.tables.sort()
+        self.columns = {
+            table: sorted(cols) for table, cols in sorted(self.columns.items())
+        }
+
+    def to_dict(self) -> dict:
+        return {"tables": self.tables, "columns": self.columns}
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """Convert SQLDependency to a Pandas DataFrame."""
+        records = []
+        for table, columns in self.columns.items():
+            schema, table_name = table.split(".") if "." in table else (None, table)
+            if columns:
+                for column in columns:
+                    records.append(
+                        {"schema": schema, "table": table_name, "column": column}
+                    )
+            else:
+                records.append({"schema": schema, "table": table_name, "column": None})
+        return pd.DataFrame(records)
+
+================================================================================
+
+File: sqldeps/utils.py
+--------------------------------------------------------------------------------
+import pandas as pd
+
+from sqldeps.models import SQLDependency
+
+
+def merge_dependencies(dependencies: list[SQLDependency]) -> SQLDependency:
+    """Merges multiple SQLDependency objects into a single one with distinct
+    tables and columns.
+
+    If a table has '*' in its column list, only '*' will be kept, and other columns
+    will be ignored.
+
+    Args:
+        dependencies (List[SQLDependency]): List of SQLDependency objects.
+
+    Returns:
+        SQLDependency: A merged dependency object with distinct tables and columns.
+    """
+    merged_tables: set[str] = set()
+    merged_columns: dict[str, set[str]] = {}
+
+    for dep in dependencies:
+        merged_tables.update(dep.tables)
+        for table, columns in dep.columns.items():
+            if "*" in columns:
+                merged_columns[table] = {"*"}
+            else:
+                merged_columns.setdefault(table, set()).update(columns)
+
+    return SQLDependency(
+        tables=list(merged_tables),
+        columns={table: list(columns) for table, columns in merged_columns.items()},
+    )
+
+
+def merge_schemas(
+    df_extracted_schema: pd.DataFrame, df_db_schema: pd.DataFrame
+) -> pd.DataFrame:
+    """Matches extracted SQL dependencies with the actual database schema,
+    handling both exact schema matches and schema-agnostic matches.
+    Expands wildcards ('*') to match all columns from the relevant table(s).
+    Handles tables with no columns (None).
+
+    Args:
+        df_extracted_schema (pd.DataFrame): Extracted table-column dependencies.
+        df_db_schema (pd.DataFrame): Actual database schema information.
+
+    Returns:
+        pd.DataFrame: Merged schema with an `exact_match` flag.
+    """
+    # Create copy to avoid modifying input
+    df_extracted = df_extracted_schema.copy()
+    df_extracted["exact_match"] = pd.Series(dtype="boolean")
+
+    # Initialize empty DataFrame with correct dtypes
+    df_no_columns = pd.DataFrame(
+        {
+            "schema": pd.Series(dtype="object"),
+            "table": pd.Series(dtype="object"),
+            "column": pd.Series(dtype="object"),
+            "data_type": pd.Series(dtype="object"),
+            "exact_match": pd.Series(dtype="boolean"),
+        }
+    )
+
+    # Handle tables with no columns (None)
+    if (no_columns_mask := df_extracted["column"].isna()).any():
+        no_columns_deps = df_extracted.loc[no_columns_mask, ["schema", "table"]]
+        df_extracted = df_extracted.loc[~no_columns_mask]
+
+        # Exact schema match
+        exact_matches = (
+            no_columns_deps.dropna(subset=["schema"])
+            .merge(df_db_schema[["schema", "table"]], on=["schema", "table"])
+            .assign(column=None, data_type=None, exact_match=True)
+        )
+
+        # Schema-agnostic match
+        schema_agnostic = no_columns_deps[no_columns_deps["schema"].isna()]
+        matching_schemas = df_db_schema.merge(schema_agnostic[["table"]], on="table")[
+            ["schema", "table"]
+        ]
+        schema_agnostic_matches = matching_schemas.assign(
+            column=None, data_type=None, exact_match=False
+        )
+
+        # Combine results
+        df_no_columns = pd.concat(
+            [exact_matches, schema_agnostic_matches], ignore_index=True
+        )
+
+    # Expand wildcards (*) to include all relevant columns
+    if (wildcard_mask := df_extracted["column"] == "*").any():
+        regular_deps = df_extracted[~wildcard_mask]
+        wildcard_deps = df_extracted[wildcard_mask]
+        expanded_wildcard_deps = []
+
+        for _, row in wildcard_deps.iterrows():
+            mask = df_db_schema["table"] == row["table"]
+            if pd.notna(row["schema"]):
+                mask &= df_db_schema["schema"] == row["schema"]
+                wildcard_schema = df_db_schema[mask][
+                    ["schema", "table", "column"]
+                ].assign(exact_match=True)
+            else:
+                wildcard_schema = df_db_schema[mask][
+                    ["schema", "table", "column"]
+                ].assign(exact_match=False)
+            expanded_wildcard_deps.append(wildcard_schema)
+
+        df_extracted = pd.concat(
+            [regular_deps, *expanded_wildcard_deps], ignore_index=True
+        )
+
+    # Exact schema matches
+    exact_matches = (
+        df_extracted[df_extracted["schema"].notna()]
+        .merge(df_db_schema, how="inner")
+        .fillna({"exact_match": True})
+    )
+
+    # Schema-agnostic matches (ignoring schema column)
+    schemaless_matches = (
+        df_extracted[df_extracted["schema"].isna()]
+        .drop(columns="schema")
+        .merge(df_db_schema, how="inner")
+        .fillna({"exact_match": False})
+    )
+
+    # Combine all results & remove duplicates with priority to exact matches
+    df_merged_schemas = (
+        pd.concat([exact_matches, schemaless_matches, df_no_columns], ignore_index=True)
+        .reindex(columns=["schema", "table", "column", "data_type", "exact_match"])
+        # Sort values to give priority to exact matches
+        .sort_values(
+            by=["schema", "table", "column", "data_type", "exact_match"],
+            ascending=[True, True, True, True, False],
+            na_position="last",
+        )
+        # Drop duplicates (keep exact matches)
+        .drop_duplicates(subset=["schema", "table", "column", "data_type"])
+        .reset_index(drop=True)
+    )
+
+    return df_merged_schemas
+
+
+def schema_diff(
+    df_extracted_schema: pd.DataFrame, df_db_schema: pd.DataFrame, copy: bool = True
+) -> pd.DataFrame:
+    """Checks if extracted schema entries exist in the database schema.
+
+    Args:
+        df_extracted_schema (pd.DataFrame): Extracted table-column dependencies.
+        df_db_schema (pd.DataFrame): Actual database schema information.
+
+    Returns:
+        pd.DataFrame: The extracted schema with an added `exist_db` flag.
+    """
+    # Copy dataframe to avoid in-place update
+    if copy:
+        df_extracted_schema = df_extracted_schema.copy()
+
+    # Create sets for quick lookup
+    db_exact_matches = set(
+        zip(
+            df_db_schema["schema"],
+            df_db_schema["table"],
+            df_db_schema["column"],
+            strict=False,
+        )
+    )
+    db_table_matches = set(
+        zip(df_db_schema["schema"], df_db_schema["table"], strict=False)
+    )
+    db_schema_agnostic = set(
+        zip(df_db_schema["table"], df_db_schema["column"], strict=False)
+    )
+    db_table_agnostic = set(df_db_schema["table"])
+
+    def check_existence(row):
+        """Helper function to determine if a row exists in the DB schema."""
+        if pd.notna(row["schema"]):
+            if row["column"] == "*":
+                return (row["schema"], row["table"]) in db_table_matches
+            return (row["schema"], row["table"], row["column"]) in db_exact_matches
+        else:
+            if row["column"] == "*":
+                return row["table"] in db_table_agnostic
+            return (row["table"], row["column"]) in db_schema_agnostic
+
+    # Apply vectorized check
+    df_extracted_schema["match_db"] = df_extracted_schema.apply(check_existence, axis=1)
+
+    return df_extracted_schema
+
+================================================================================
+
+File: tests/conftest.py
+--------------------------------------------------------------------------------
+def pytest_addoption(parser) -> None:
+    """Register custom pytest command-line options"""
+    parser.addoption(
+        "--framework",
+        action="store",
+        default="groq",
+        help="Specify the framework to use (openai, groq, deepseek)",
+    )
+    parser.addoption(
+        "--model",
+        action="store",
+        default=None,
+        help="Specify the model to use within the selected framework",
+    )
+    parser.addoption(
+        "--prompt",
+        action="store",
+        default=None,
+        help="Specify the path to the prompt yml file to use a custom prompt",
+    )
+
+
+def pytest_configure(config):
+    """Register custom markers"""
+    config.addinivalue_line(
+        "markers",
+        "llm: mark tests that require LLM API calls (typically skipped in CI/CD)",
+    )
+
+================================================================================
+
+File: tests/test_merge_dependencies.py
+--------------------------------------------------------------------------------
+from sqldeps.models import SQLDependency
+from sqldeps.utils import merge_dependencies
+
+
+def test_merge_dependencies() -> None:
+    """
+    Test merging multiple SQLDependency objects with different schemas, tables,
+    and cases where '*' (wildcard) appears in column dependencies.
+
+    Ensures:
+    1. Unique tables are merged correctly.
+    2. Columns are merged per table unless '*' is present.
+    3. When '*' appears in a table's columns, it takes precedence,
+    and other columns are ignored.
+    """
+
+    # First dependency set: Normal tables with specific columns
+    dep1 = SQLDependency(
+        tables=["public.users", "sales.orders"],
+        columns={
+            "public.users": ["id", "name"],  # Specific columns for 'users'
+            "sales.orders": ["order_id", "user_id"],  # Specific columns for 'orders'
+        },
+    )
+
+    # Second dependency set: A mix of specific columns and a wildcard '*'
+    dep2 = SQLDependency(
+        tables=["sales.orders", "products"],
+        columns={
+            "sales.orders": [
+                "*"
+            ],  # Wildcard '*' should override specific columns from dep1
+            "products": ["product_id", "name"],  # Specific columns for 'products'
+        },
+    )
+
+    # Third dependency set: Another table and more columns for 'users'
+    dep3 = SQLDependency(
+        tables=["public.users", "payments"],
+        columns={
+            "public.users": ["email"],  # Adding 'email' to 'users' table
+            "payments": ["payment_id", "user_id"],  # Specific columns for 'payments'
+        },
+    )
+
+    # Merge all dependencies together
+    merged_dep = merge_dependencies([dep1, dep2, dep3])
+
+    # Expected merged result: Distinct tables and merged columns
+    expected_result = SQLDependency(
+        tables=["payments", "products", "public.users", "sales.orders"],
+        columns={
+            "payments": [
+                "payment_id",
+                "user_id",
+            ],  # Payments should contain both columns
+            "products": ["name", "product_id"],  # Products should remain unchanged
+            "public.users": [
+                "email",
+                "id",
+                "name",
+            ],  # Users should include all unique columns
+            "sales.orders": [
+                "*"
+            ],  # '*' takes precedence and should be the only column here
+        },
+    )
+
+    # Validate that the merged dependency matches the expected result
+    assert merged_dep.to_dict() == expected_result.to_dict(), (
+        "Merged dependencies do not match expected output"
+    )
+
+================================================================================
+
+File: tests/test_merge_schemas.py
+--------------------------------------------------------------------------------
+import pandas as pd
+
+from sqldeps.utils import merge_schemas
+
+
+def test_merge_schemas() -> None:
+    """
+    Tests all combinations of schema/table/column matches including:
+    - Wildcards (*)
+    - No columns (None)
+    - Exact schema matches
+    - Schema-agnostic matches
+
+    Test Matrix:
+    Schema  Table   Column  Expected
+    ------  ------  ------  --------
+    yes     yes     yes     Exact match
+    yes     yes     *       Exact match for all columns
+    yes     yes     None    Exact match with no columns
+    yes     no      yes     No match (non-existent table)
+    yes     no      None    No match (non-existent table)
+    no      yes     yes     Schema-agnostic match
+    no      yes     *       Schema-agnostic match for all columns
+    no      yes     None    Schema-agnostic match with no columns
+    no      no      yes     No match (non-existent table)
+    no      no      None    No match (non-existent table)
+    """
+    # Database schema
+    db_records = [
+        # schema1.table1 (primary test table)
+        ["schema1", "table1", "col1", "type1"],
+        ["schema1", "table1", "col2", "type1"],
+        # schema2.table1 (same table, different schema)
+        ["schema2", "table1", "col1", "type1"],
+        ["schema2", "table1", "col3", "type1"],
+        # schema1.table2 (different table)
+        ["schema1", "table2", "col4", "type1"],
+        # schema2.table3 (unique table)
+        ["schema2", "table3", "col5", "type1"],
+    ]
+    df_db = pd.DataFrame(db_records, columns=["schema", "table", "column", "data_type"])
+
+    # Test all combinations
+    test_records = [
+        # Schema-specific matches
+        ["schema1", "table1", "col1"],  # Direct match
+        ["schema1", "table1", "*"],  # Wildcard in specific schema
+        ["schema1", "table1", None],  # No columns with schema
+        ["schema1", "missing", "col1"],  # Non-existent table
+        ["schema1", "missing", None],  # Non-existent table, no columns
+        ["schema3", "table1", "col1"],  # Non-existent schema
+        # Schema-agnostic matches
+        [None, "table1", "col1"],  # Match across schemas
+        [None, "table1", "*"],  # Wildcard across schemas
+        [None, "table1", None],  # No columns, schema-agnostic
+        [None, "missing", "col1"],  # Non-existent table
+        [None, "missing", None],  # Non-existent table, no columns
+        [None, "table1", "missing"],  # Non-existent column
+    ]
+    df_test = pd.DataFrame(test_records, columns=["schema", "table", "column"])
+
+    # Expected results
+    expected_records = [
+        # schema1.table1 matches
+        ["schema1", "table1", "col1", "type1", True],  # Direct match
+        ["schema1", "table1", "col2", "type1", True],  # From schema1 wildcard
+        ["schema1", "table1", None, None, True],  # No columns, exact schema
+        # schema2.table1 matches (schema-agnostic)
+        ["schema2", "table1", "col1", "type1", False],  # Schema-agnostic match
+        ["schema2", "table1", "col3", "type1", False],  # From agnostic wildcard
+        ["schema2", "table1", None, None, False],  # No columns, schema-agnostic
+    ]
+    df_expected = (
+        pd.DataFrame(
+            data=expected_records,
+            columns=["schema", "table", "column", "data_type", "exact_match"],
+        )
+        .sort_values(
+            by=["schema", "table", "column", "data_type", "exact_match"],
+            ascending=[True, True, True, True, False],
+            na_position="last",
+        )
+        .assign(exact_match=lambda x: x.exact_match.astype("boolean"))
+        .reset_index(drop=True)
+    )
+
+    # Run merge_schemas
+    result = merge_schemas(df_test, df_db)
+
+    # Verify results match expectations
+    pd.testing.assert_frame_equal(result, df_expected)
+
+    # Additional assertions
+
+    # Test 1: Verify schema1.table1 matches (including None columns)
+    schema1_matches = result[result["schema"] == "schema1"]
+    assert len(schema1_matches) == 3  # Two columns + one None
+    assert all(schema1_matches["exact_match"])
+
+    # Test 2: Verify schema2.table1 matches (including None columns)
+    schema2_matches = result[result["schema"] == "schema2"]
+    assert len(schema2_matches) == 3  # Two columns + one None
+    assert not any(schema2_matches["exact_match"])
+
+    # Test 3: Verify non-matches
+    assert "missing" not in result["table"].values
+    assert "missing" not in result["column"].values
+    assert "schema3" not in result["schema"].values
+
+    # Test 4: Verify no duplicates
+    assert not result.duplicated().any()
+
+    # Test 5: Verify None columns are properly handled
+    none_cols = result[result["column"].isna()]
+    assert len(none_cols) == 2  # One exact match, one schema-agnostic
+    assert sum(none_cols["exact_match"]) == 1  # One exact match
+
+
+def test_edge_cases() -> None:
+    """Test edge cases for merge_schemas"""
+    # Minimal database schema
+    db_records = [
+        ["schema1", "table1", "col1", "type1"],
+        ["schema1", "table1", "col2", "type1"],
+        ["schema2", "table1", "col1", "type1"],
+    ]
+    df_db = pd.DataFrame(db_records, columns=["schema", "table", "column", "data_type"])
+
+    # Test case 1: Empty input
+    df_empty = pd.DataFrame(columns=["schema", "table", "column"])
+    result_empty = merge_schemas(df_empty, df_db)
+    assert len(result_empty) == 0
+
+    # Test case 2: Mix of wildcards and None columns
+    df_mixed = pd.DataFrame(
+        [
+            ["schema1", "table1", "*"],  # Wildcard with schema
+            ["schema1", "table1", None],  # None with schema
+            [None, "table1", "*"],  # Schema-agnostic wildcard
+            [None, "table1", None],  # Schema-agnostic None
+        ],
+        columns=["schema", "table", "column"],
+    )
+    result_mixed = merge_schemas(df_mixed, df_db)
+
+    # Verify mixed results
+    assert len(result_mixed) == 5  # 2 columns + 1 None (exact) + 2 columns (agnostic)
+    assert (
+        sum(result_mixed["exact_match"]) == 3
+    )  # Two columns + one None from exact matches
+    assert (
+        sum(result_mixed["column"].isna()) == 2
+    )  # Two None entries (one exact, one agnostic)
+
+    # Test case 3: Only None columns
+    df_none = pd.DataFrame(
+        [
+            ["schema1", "table1", None],
+            [None, "table1", None],
+        ],
+        columns=["schema", "table", "column"],
+    )
+    result_none = merge_schemas(df_none, df_db)
+    assert len(result_none) == 2  # One exact match, one schema-agnostic
+    assert sum(result_none["exact_match"]) == 1  # One exact match
+    assert all(result_none["column"].isna())  # All columns should be None
+
+================================================================================
+
+File: tests/test_schema_diff.py
+--------------------------------------------------------------------------------
+import pandas as pd
+
+from sqldeps.utils import schema_diff
+
+
+def test_schema_diff() -> None:
+    """
+    Test the optimized schema_diff function with comprehensive scenarios.
+    """
+    # Setup test data
+    db_records = [
+        ["schema1", "users", "id", "INTEGER"],
+        ["schema1", "users", "email", "VARCHAR"],
+        ["schema2", "users", "id", "INTEGER"],
+        ["schema2", "orders", "id", "INTEGER"],
+    ]
+    df_db = pd.DataFrame(db_records, columns=["schema", "table", "column", "data_type"])
+
+    test_records = [
+        # Exact matches (should exist)
+        ["schema1", "users", "id"],
+        ["schema2", "orders", "id"],
+        # Non-existent combinations
+        ["schema1", "users", "nonexistent"],
+        ["schema3", "users", "id"],
+        # Wildcards with schema
+        ["schema1", "users", "*"],
+        ["schema3", "users", "*"],
+        # Schema-agnostic matches
+        [None, "users", "id"],
+        [None, "users", "nonexistent"],
+        # Schema-agnostic wildcards
+        [None, "users", "*"],
+        [None, "nonexistent", "*"],
+    ]
+    df_test = pd.DataFrame(test_records, columns=["schema", "table", "column"])
+
+    # Run schema_diff
+    result = schema_diff(df_test, df_db)
+
+    # Verify results
+    expected_exists = [
+        True,  # schema1.users.id exists
+        True,  # schema2.orders.id exists
+        False,  # schema1.users.nonexistent doesn't exist
+        False,  # schema3.users.id doesn't exist
+        True,  # schema1.users.* matches
+        False,  # schema3.users.* doesn't match
+        True,  # agnostic users.id exists
+        False,  # agnostic users.nonexistent doesn't exist
+        True,  # agnostic users.* matches
+        False,  # agnostic nonexistent.* doesn't match
+    ]
+
+    assert all(result["match_db"] == expected_exists)
+
+    # Test edge cases
+    empty_df = pd.DataFrame(columns=["schema", "table", "column"])
+    empty_result = schema_diff(empty_df, df_db)
+    assert len(empty_result) == 0
+
+    single_row = pd.DataFrame(
+        [["schema1", "users", "*"]], columns=["schema", "table", "column"]
+    )
+    single_result = schema_diff(single_row, df_db)
+    assert bool(single_result["match_db"].iloc[0]) is True
+
+================================================================================
+
+File: tests/test_sql.py
+--------------------------------------------------------------------------------
+import json
+
+import pytest
+
+from sqldeps.llm_parsers import create_extractor
+
+
+# Define a fixture to allow parameterized extractor selection
+@pytest.fixture()
+def extractor(request):
+    framework = request.config.getoption("--framework")
+    model = request.config.getoption("--model")
+    prompt = request.config.getoption("--prompt")
+
+    extractor = create_extractor(framework, model, prompt_path=prompt)
+
+    # Add logging
+    if prompt:
+        print(
+            f'Framework: {framework} | Model: "{extractor.model}" | "'
+            f"Custom prompt path: {prompt}"
+        )
+    else:
+        print(f'Framework: {framework} | Model: "{extractor.model}"')
+
+    return extractor
+
+
+## TODO: Add test for invalid SQL query
+# def test_invalid_sql(extractor):
+#     """Test handling of invalid SQL"""
+#     with pytest.raises(Exception):
+#         extractor.extract_from_query("SELECT * FRO users")
+
+
+@pytest.mark.parametrize(
+    "sql_file, expected_output_file",
+    [
+        (
+            "tests/test_sql/example1.sql",
+            "tests/test_sql_outputs/example1_expected.json",
+        ),
+        (
+            "tests/test_sql/example2.sql",
+            "tests/test_sql_outputs/example2_expected.json",
+        ),
+        (
+            "tests/test_sql/example3.sql",
+            "tests/test_sql_outputs/example3_expected.json",
+        ),
+        (
+            "tests/test_sql/example4.sql",
+            "tests/test_sql_outputs/example4_expected.json",
+        ),
+        (
+            "tests/test_sql/example5.sql",
+            "tests/test_sql_outputs/example5_expected.json",
+        ),
+        (
+            "tests/test_sql/example6.sql",
+            "tests/test_sql_outputs/example6_expected.json",
+        ),
+        (
+            "tests/test_sql/example7.sql",
+            "tests/test_sql_outputs/example7_expected.json",
+        ),
+        (
+            "tests/test_sql/example8.sql",
+            "tests/test_sql_outputs/example8_expected.json",
+        ),
+        (
+            "tests/test_sql/example9.sql",
+            "tests/test_sql_outputs/example9_expected.json",
+        ),
+        (
+            "tests/test_sql/example10.sql",
+            "tests/test_sql_outputs/example10_expected.json",
+        ),
+    ],
+)
+@pytest.mark.llm
+def test_sql_dependency_extraction(sql_file, expected_output_file, extractor) -> None:
+    # print(sql_file, expected_output_file)
+    # Load SQL code
+    with open(sql_file) as f:
+        sql = f.read()
+
+    # Load expected output
+    with open(expected_output_file) as f:
+        expected_output = json.load(f)
+
+    # Run the extractor
+    dependency = extractor.extract_from_query(sql)
+
+    # Assert the output matches the expected
+    assert dependency.to_dict() == expected_output
+
+================================================================================
+

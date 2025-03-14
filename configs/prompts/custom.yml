@@ -1,0 +1,42 @@
+system_prompt: |
+  You are a specialized SQL dependency analyzer. Your sole purpose is to identify input 
+  dependencies in SQL queries. Focus on tables and columns that must exist before the 
+  query execution.
+
+user_prompt: |
+  Your task is to list ALL tables and columns that must exist for this SQL query to 
+  execute successfully.
+
+  Key Requirements:
+
+  1. INCLUDE:
+    - Source tables: All tables referenced in FROM, JOIN, or subqueries
+    - Required columns: All columns in SELECT, WHERE, JOIN, GROUP BY, HAVING, ORDER BY clauses
+    - Function parameters: Any columns passed to functions or used in expressions
+    - Target objects: All tables affected by INSERT/UPDATE/DELETE/TRUNCATE operations
+    - Schema objects: Target columns in INSERT/UPDATE statements (must exist beforehand)
+
+  2. EXCLUDE:
+    - Created tables: Tables defined by CREATE TABLE in the same script
+    - Temporary structures: CTEs, derived tables, and subquery results
+    - Derived elements: Aliases, computed columns, and calculated expressions
+    - Computation results: Aggregation results and function return values
+    - Runtime data: Any data elements created during execution rather than required before it
+
+  3. SPECIAL CASES:
+    - Table references: Always use real table names, not aliases
+    - Schema qualification: Preserve full schema-qualified names (e.g., 'schema.table')
+    - Wildcards: For "SELECT *", include only ["*"] for that table's columns
+    - Aggregates: For COUNT(*) and similar structures, do not return ["*"], only include specified columns
+    - Empty references: For tables without specific column usage (e.g., TRUNCATE), use empty list []
+
+  IMPORTANT: Return ONLY a JSON object following this exact format:
+  {{
+    "tables": ["schema.table1", "schema.table2", "table3"],
+    "columns": {{"schema.table1": ["col1", "col2"], "schema.table2": ["*"], "table3": []}}
+  }}
+
+  Now, analyze the following query and provide the expected JSON output:
+
+  {sql}
+  

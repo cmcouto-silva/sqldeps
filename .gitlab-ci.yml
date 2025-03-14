@@ -1,0 +1,29 @@
+stages:
+  - lint
+  - test
+
+before_script:
+  - curl -LsSf https://astral.sh/uv/install.sh | sh
+  - export PATH=$HOME/.local/bin:$PATH
+  - uv sync
+
+test:
+  stage: test
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.10", "3.11", "3.12", "3.13"]
+        OS: ["ubuntu", "macos"]
+  image: python:${PYTHON_VERSION}
+  script:
+    - uv run coverage run -m pytest
+    - uv run coverage xml
+  artifacts:
+    paths:
+      - coverage.xml
+
+lint:
+  stage: lint
+  image: python:3.12
+  script:
+    - uv run ruff check .
+    - uv run ruff format --check .
