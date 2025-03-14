@@ -19,17 +19,15 @@ authors = [
     {name = "Cainã Silva", email = "coutodasilva@wisc.edu"},
     {name = "Matt Christie", email = "mjchristie@wisc.edu"}
 ]
-readme = "README_PyPI.md"
+readme = "README.md"
 keywords = ["sql", "dependency", "parser", "extractor", "llm"]
 dependencies = [
     "groq>=0.17.0",
     "loguru>=0.7.3",
     "openai>=1.59.5",
     "pandas>=2.2.3",
-    "psycopg2>=2.9.10",
     "python-dotenv>=1.0.1",
     "pyyaml>=6.0.2",
-    "sqlalchemy>=2.0.37",
     "sqlparse>=0.5.3",
     "typer>=0.15.1",
 ]
@@ -37,6 +35,10 @@ dependencies = [
 [project.optional-dependencies]
 app = [
     "streamlit>=1.42.1",
+]
+database = [
+    "psycopg2>=2.9.10",
+    "sqlalchemy>=2.0.39",
 ]
 
 [project.scripts]
