@@ -48,7 +48,6 @@ testpaths = ["tests"]
 markers = [
     "llm: marks tests that require LLM API calls (skipped by default)",
 ]
-# Skip LLM tests by default unless explicitly requested
 addopts = "-m 'not llm'"
 
 [tool.hatch.metadata]

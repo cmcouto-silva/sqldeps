@@ -1,8 +1,25 @@
 # SQL Dependency Extractor
 
-![Tests](https://github.com/cmcouto-silva/sqldeps/actions/workflows/ci.yml/badge.svg)
+<p align="left">
+<a href="https://github.com/cmcouto-silva/sqldeps/actions/workflows/ci.yml" target="_blank">
+    <img src="https://github.com/cmcouto-silva/sqldeps/actions/workflows/ci.yml/badge.svg" alt="Test">
+</a>
+<a href="https://pypi.org/project/sqldeps" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/sqldeps.svg?color=%2334D058" alt="Supported Python versions">
+</a>
+<a href="https://pypi.org/project/sqldeps" target="_blank">
+    <img src="https://img.shields.io/pypi/v/sqldeps?color=%2334D058&label=pypi%20package" alt="Package version">
+</a>
+<a href="https://pypistats.org/packages/sqldeps" target="_blank">
+    <img src="https://img.shields.io/pypi/dm/sqldeps.svg?label=PyPI%20downloads" alt="PyPI Downloads">
+</a>
+<a href="https://opensource.org/licenses/MIT" target="_blank">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="PyPI Downloads">
+</a>
+</p>
 
 An intelligent tool that automatically extracts and maps critical table and column dependencies from SQL scripts using advanced LLM capabilities.
+
 
 ## Overview
 
